@@ -1,0 +1,143 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: Arial, Helvetica, Arial, sans-serif;
+  background-color: transparent;
+}
+
+body {
+  /* Prevents selection oftext */
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+#gui {
+  position: absolute;
+  top: 0;
+  z-index: 5;
+  padding: 0.5em 0 0 0;
+
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 0.6em;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+#gui > #controls {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 0.6em;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#gui > #controls > #roomModelNumber {
+  display: none;
+}
+
+#info {
+  color: rgb(225, 225, 225);
+  background-color: rgb(50, 50, 50, 0.5);
+
+  opacity: 0.8;
+  z-index: 5;
+
+  visibility: visible;
+  position: absolute;
+
+  height: 80%;
+  width: 80%;
+
+  top: 10%;
+  left: 10%;
+
+  transition: opacity 0.1s, visibility 0.1s;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+
+  padding: 0.5em 0.5em 0;
+}
+
+#info.change {
+  opacity: 0;
+  visibility: hidden;
+}
+
+#theDialogue {
+  background-color: #000;
+  border: 2px solid #fff;
+  -moz-border-radius: 4px; /* Mozilla / Firefox */
+  -webkit-border-radius: 4px; /* Safari / Chrome */
+  border-radius: 4px; /* CSS3 */
+  color: #eee;
+  height: 10em;
+  overflow: scroll;
+  padding: 0.25em;
+  /* width: 42em; */
+  width: 90% !important;
+}
+
+#actorGui {
+  position: absolute;
+  white-space: nowrap;
+  bottom: 0;
+  left: 0;
+  z-index: 5;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 0.5em;
+
+  width: 100%;
+  margin-bottom: 0.5em;
+}
+.actorGuiButton {
+  border: 2px;
+  background-color: rgb(200, 200, 200);
+  opacity: 0.8;
+  white-space: normal;
+  width: 30%;
+  height: 30%;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+
+  /* Prevents selection oftext */
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+.actorGuiButton:hover {
+  background-color: rgb(150, 150, 150);
+}
+.actorGuiButton:active {
+  box-shadow: inset -2px -2px 3px rgba(255, 255, 255, 0.6),
+    inset 2px 2px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* Included in the photon sample code but hides */
+#joinorcreategamebtn {
+  display: none !important;
+}
+#expectedusers {
+  display: none !important;
+}
+#setexpectedusers {
+  display: none !important;
+}
+#clearexpectedusers {
+  display: none !important;
+}
