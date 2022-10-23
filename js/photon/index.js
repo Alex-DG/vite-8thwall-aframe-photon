@@ -768,7 +768,7 @@ window.onload = function () {
   // Set room model
   roomModelNumber = 1
   setTimeout(() => {
-    createRoomModel(roomModelNumber)
+    // createRoomModel(roomModelNumber)
   }, 3.0 * 1000)
 
   function render() {
@@ -904,6 +904,9 @@ let isMyObjectCreated = false
 let models = []
 let animationInfoPerModel = []
 function createModel(actorNr, actor = false, avatorNr) {
+  console.log('------------------------')
+  console.log('----- CREATE MODEL -----')
+  console.log('------------------------')
   console.log('createModel...')
   console.log('-> actorNr:', actorNr, ',avatorNr:', avatorNr)
 
@@ -939,6 +942,9 @@ function createModel(actorNr, actor = false, avatorNr) {
   dracoLoader.setDecoderPath(
     'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/js/libs/draco/'
   )
+  console.log({
+    modelSrc: '../../assets/avators/raw/' + avatorModelNames[avatorNr - 1],
+  })
   loader.setDRACOLoader(dracoLoader)
   loader.load(
     // resource URL
@@ -948,6 +954,7 @@ function createModel(actorNr, actor = false, avatorNr) {
     // called when the resource is loaded
     function (gltf) {
       let model = gltf.scene
+      console.log({ model, actorNr })
       model.name = 'model' + String(actorNr)
       model.position.set(0, 0, 0)
       model.rotation.set(0, 0, 0)
@@ -955,6 +962,15 @@ function createModel(actorNr, actor = false, avatorNr) {
 
       model.traverse(function (child) {
         if (child.isMesh) {
+          // child.name
+
+          // Change T-Shirt color
+          // if (child.name === 'HG_TSHIRT_Male001') {
+          //   child.material.color.setHex(Math.random() * 0xffffff)
+          // }
+          // console.log({ name: child.name, child })
+          // console.log('HG_TSHIRT_Male.001')
+
           //console.log("isMesh...");
           //let model2 = child.clone();
 
