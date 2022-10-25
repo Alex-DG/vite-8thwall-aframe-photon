@@ -1,6 +1,6 @@
 /**
  * Register components
  */
-import { tapPlaceComponent } from './tap-place'
+import { rendererComponent } from './renderer'
 
-AFRAME.registerComponent('tap-place', tapPlaceComponent)
+AFRAME.registerComponent('renderer', rendererComponent)

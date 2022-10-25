@@ -1,64 +1,32 @@
-const AppInfo = {
-  Wss: true,
-  AppId: 'dc8ae0f4-ecde-4a33-aa86-3fb4d3d0a117',
-  AppVersion: '1.0',
-  //	MasterServer: "localhost:9090"
-  //  NameServer: "ws://localhost:9093"
-  //  FbAppId: "you fb app id",
-}
+import { AppInfo, __extends } from './config'
 
-var __extends =
-  (this && this.__extends) ||
-  (function () {
-    var extendStatics = function (d, b) {
-      extendStatics =
-        Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array &&
-          function (d, b) {
-            d.__proto__ = b
-          }) ||
-        function (d, b) {
-          for (var p in b)
-            if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]
-        }
-      return extendStatics(d, b)
-    }
-    return function (d, b) {
-      extendStatics(d, b)
-      function __() {
-        this.constructor = d
-      }
-      d.prototype =
-        b === null ? Object.create(b) : ((__.prototype = b.prototype), new __())
-    }
-  })()
-// For Photon Cloud Application access create cloud-app-info.js file in the root directory (next to default.html) and place next lines in it:
-//var AppInfo = {
-//    MasterAddress: "master server address:port",
-//    AppId: "your app id",
-//    AppVersion: "your app version",
-//}
-// fetching app info global variable while in global context
-var DemoWss = AppInfo.Wss //this['AppInfo'] && this['AppInfo']['Wss']
-var DemoAppId = AppInfo?.AppId || '<no-app-id>'
-var DemoAppVersion = AppInfo?.AppVersion || '1.0'
-var DemoMasterServer = AppInfo?.MasterServer // this['AppInfo'] && this['AppInfo']['MasterServer']
-var DemoNameServer = AppInfo?.NameServer // this['AppInfo'] && this['AppInfo']['NameServer']
-var DemoFbAppId = AppInfo?.FbAppid //this['AppInfo'] && this['AppInfo']['FbAppId']
-var ConnectOnStart = false
+// Settings
+const DemoWss = AppInfo.Wss //this['AppInfo'] && this['AppInfo']['Wss']
+const DemoAppId = AppInfo.AppId || '<no-app-id>'
+const DemoAppVersion = AppInfo.AppVersion || '1.0'
+const DemoMasterServer = AppInfo?.MasterServer // this['AppInfo'] && this['AppInfo']['MasterServer']
+const DemoNameServer = AppInfo?.NameServer // this['AppInfo'] && this['AppInfo']['NameServer']
+const DemoFbAppId = AppInfo?.FbAppid //this['AppInfo'] && this['AppInfo']['FbAppId']
 
-var DemoLoadBalancing = /** @class */ (function (_super) {
-  __extends(DemoLoadBalancing, _super)
-  function DemoLoadBalancing() {
-    console.log('DemoLoadBalancing init...')
-    var _this =
+let ConnectOnStart = false
+
+const AppLoadBalancing = /** @class */ (function (_super) {
+  __extends(AppLoadBalancing, _super)
+  function AppLoadBalancing() {
+    console.log('LoadBalancing > init ⚙️')
+
+    const _this =
       _super.call(
         this,
-        DemoWss ? Photon.ConnectionProtocol.Wss : Photon.ConnectionProtocol.Ws,
-        DemoAppId,
-        DemoAppVersion
+        AppInfo.Wss
+          ? Photon.ConnectionProtocol.Wss
+          : Photon.ConnectionProtocol.Ws,
+        AppInfo.AppId,
+        AppInfo.AppVersion
       ) || this
+
     _this.logger = new Exitgames.Common.Logger('Demo:')
+
     _this.USERCOLORS = [
       '#FF0000',
       '#00AA00',
@@ -67,22 +35,26 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
       '#00FFFF',
       '#FF00FF',
     ]
+
     // uncomment to use Custom Authentication
     // this.setCustomAuthentication("username=" + "yes" + "&token=" + "yes");
+
     _this.output(
       _this.logger.format(
         'Init',
         _this.getNameServerAddress(),
-        DemoAppId,
-        DemoAppVersion
+        AppInfo.AppId,
+        AppInfo.AppVersion
       )
     )
+
     _this.logger.info(
       'Init',
       _this.getNameServerAddress(),
-      DemoAppId,
-      DemoAppVersion
+      AppInfo.AppId,
+      AppInfo.AppVersion
     )
+
     _this.setLogLevel(Exitgames.Common.Logger.Level.INFO)
     _this.myActor().setCustomProperty('color', _this.USERCOLORS[0])
 
@@ -95,66 +67,72 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
 
     return _this
   }
-  DemoLoadBalancing.prototype.start = function () {
-    console.log('DemoLoadBalancing start...')
+
+  AppLoadBalancing.prototype.start = function () {
+    console.log('LoadBalancing > start')
+
     this.setupUI()
+
     // connect if no fb auth required
     if (ConnectOnStart) {
-      if (DemoMasterServer) {
-        this.setMasterServerAddress(DemoMasterServer)
+      if (AppInfo?.MasterServer) {
+        this.setMasterServerAddress(AppInfo.MasterServer)
         this.connect()
       }
-      if (DemoNameServer) {
-        this.setNameServerAddress(DemoNameServer)
-        this.connectToRegionMaster('EU')
-      } else {
-        this.connectToRegionMaster('EU')
-      }
+
+      if (AppInfo?.NameServer) this.setNameServerAddress(AppInfo.NameServer)
+
+      this.connectToRegionMaster(AppInfo.Region)
     }
-    console.log('DemoLoadBalancing started...')
+
+    console.log('LoadBalancing > started ✅')
   }
-  DemoLoadBalancing.prototype.onError = function (errorCode, errorMsg) {
-    // console.log("DemoLoadBalancing error...");
+
+  AppLoadBalancing.prototype.onError = function (errorCode, errorMsg) {
+    console.log('LoadBalancing > error ❌')
     this.output('Error ' + errorCode + ': ' + errorMsg)
   }
-  DemoLoadBalancing.prototype.onEvent = function (code, content, actorNr) {
-    // console.log("DemoLoadBalancing event...");
+
+  AppLoadBalancing.prototype.onEvent = function (code, content, actorNr) {
     switch (code) {
       case 1:
-        var mess = content.message
-        var sender = content.senderName
-        if (actorNr)
+        const mess = content.message
+        const sender = content.senderName
+
+        if (actorNr) {
           this.output(
             sender + ': ' + mess,
             this.myRoomActors()[actorNr].getCustomProperty('color')
           )
-        else this.output(sender + ': ' + mess)
+        } else {
+          this.output(sender + ': ' + mess)
+        }
         break
       default:
     }
     this.logger.debug('onEvent', code, 'content:', content, 'actor:', actorNr)
   }
-  DemoLoadBalancing.prototype.onStateChange = function (state) {
-    // console.log("DemoLoadBalancing state change...");
 
-    // "namespace" import for static members shorter acceess
-    var LBC = Photon.LoadBalancing.LoadBalancingClient
-    var stateText = document.getElementById('statetxt')
+  AppLoadBalancing.prototype.onStateChange = function (state) {
+    const LBC = Photon.LoadBalancing.LoadBalancingClient
+    const stateText = document.getElementById('statetxt')
     stateText.textContent = 'State: '
     stateText.textContent += LBC.StateToName(state)
+
     this.updateRoomButtons()
     this.updateRoomInfo()
   }
-  DemoLoadBalancing.prototype.objToStr = function (x) {
+
+  AppLoadBalancing.prototype.objToStr = function (x) {
     var res = ''
     for (var i in x) {
       res += (res == '' ? '' : ' ,') + i + '=' + x[i]
     }
     return res
   }
-  DemoLoadBalancing.prototype.updateRoomInfo = function () {
-    // console.log("DemoLoadBalancing updateRoomInfo...");
-    var stateText = document.getElementById('roominfo')
+
+  AppLoadBalancing.prototype.updateRoomInfo = function () {
+    const stateText = document.getElementById('roominfo')
     stateText.innerHTML =
       'room: ' +
       this.myRoom().name +
@@ -164,7 +142,9 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
       this.myRoom().expectedUsers +
       ']'
     stateText.innerHTML = stateText.innerHTML + '<br>'
-    let memory = document.querySelector('a-scene').renderer.info.memory
+
+    const memory = document.querySelector('a-scene').renderer.info.memory
+
     stateText.innerHTML +=
       ' renderer.info.memory -> geometries:' +
       memory.geometries +
@@ -173,9 +153,11 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
     stateText.innerHTML = stateText.innerHTML + '<br>'
     stateText.innerHTML += ' actors: '
     stateText.innerHTML = stateText.innerHTML + '<br>'
-    for (var nr in this.myRoomActors()) {
-      var a = this.myRoomActors()[nr]
+
+    for (let nr in this.myRoomActors()) {
+      const a = this.myRoomActors()[nr]
       //stateText.innerHTML += " " + nr + " " + a.name + " [" + this.objToStr(a.getCustomProperties()) + "]";
+
       let text =
         'pos(' +
         String(a.getCustomProperty('pos').x) +
@@ -184,16 +166,18 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
         ', ' +
         String(a.getCustomProperty('pos').z) +
         '), '
+      text += 'room(' + String(a.getCustomProperty('roomModel')) + ')'
       //text += "rot("+String(a.getCustomProperty("rot").x)+", "+String(a.getCustomProperty("rot").y)+", "+String(a.getCustomProperty("rot").z)+"), "
       //text += "weight("+String(a.getCustomProperty("actionWeights")[0])+"), "
-      text += 'room(' + String(a.getCustomProperty('roomModel')) + ')'
+
       stateText.innerHTML += ' ' + nr + ' ' + a.name + ' [' + text + ']'
       stateText.innerHTML = stateText.innerHTML + '<br>'
     }
+
     this.updateRoomButtons()
   }
-  DemoLoadBalancing.prototype.onActorPropertiesChange = function (actor) {
-    //console.log("onActorPropertiesChange...");
+
+  AppLoadBalancing.prototype.onActorPropertiesChange = function (actor) {
     this.updateModelInfo(actor)
     this.updateRoomInfo()
 
@@ -226,10 +210,12 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
     //     });
     // }
   }
-  DemoLoadBalancing.prototype.onMyRoomPropertiesChange = function () {
+
+  AppLoadBalancing.prototype.onMyRoomPropertiesChange = function () {
     this.updateRoomInfo()
   }
-  DemoLoadBalancing.prototype.onRoomListUpdate = function (
+
+  AppLoadBalancing.prototype.onRoomListUpdate = function (
     rooms,
     roomsUpdated,
     roomsAdded,
@@ -242,6 +228,7 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
       roomsAdded,
       roomsRemoved
     )
+
     this.output(
       'Demo: Rooms update: ' +
         roomsUpdated.length +
@@ -251,15 +238,19 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
         roomsRemoved.length +
         ' removed'
     )
+
     this.onRoomList(rooms)
     this.updateRoomButtons() // join btn state can be changed
   }
-  DemoLoadBalancing.prototype.onRoomList = function (rooms) {
-    var menu = document.getElementById('gamelist')
+
+  AppLoadBalancing.prototype.onRoomList = function (rooms) {
+    const menu = document.getElementById('gamelist')
+
     while (menu.firstChild) {
       menu.removeChild(menu.firstChild)
     }
-    var selectedIndex = 0
+
+    let selectedIndex = 0
     for (var i = 0; i < rooms.length; ++i) {
       var r = rooms[i]
       var item = document.createElement('option')
@@ -270,15 +261,19 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
         selectedIndex = i
       }
     }
+
     menu.selectedIndex = selectedIndex
+
     this.output('Demo: Rooms total: ' + rooms.length)
     this.updateRoomButtons()
   }
-  DemoLoadBalancing.prototype.onJoinRoom = function () {
+
+  AppLoadBalancing.prototype.onJoinRoom = function () {
     this.output('Game ' + this.myRoom().name + ' joined')
     this.updateRoomInfo()
   }
-  DemoLoadBalancing.prototype.onActorJoin = function (actor) {
+
+  AppLoadBalancing.prototype.onActorJoin = function (actor) {
     this.output('actor ' + actor.actorNr + ' joined')
 
     // // Create objects according to the number of actors
@@ -318,15 +313,16 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
     //     createModel(actor.actorNr, false, roomModelNumber);
     // }
 
+    const myRoomActorCount = this.myRoomActorCount()
     // Create objects according to the number of actors
-    console.log('len:', this.myRoomActorCount())
-    if (
-      this.myRoomActorCount() <= 1 &&
-      actor.actorNr == this.myActor().actorNr
-    ) {
+    console.log('len:', myRoomActorCount)
+
+    if (myRoomActorCount <= 1 && actor.actorNr == this.myActor().actorNr) {
       // [1] when joined actor is only me
-      console.log('joined actor is only me...')
+      console.log('🧍🏼 Joined actor is only me...')
+
       createModel(actor.actorNr, false, roomModelNumber)
+
       isMyObjectCreated = true
       let tmpRoomModelNr = actor.getCustomProperty('roomModel')
       if (roomModelNumber != tmpRoomModelNr) {
@@ -338,6 +334,7 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
       if (actor.actorNr == this.myActor().actorNr) {
         // [2] when joined actor is me
         console.log('joined actor is me...')
+
         let tmpRoomModelNr
         for (var nr in this.myRoomActors()) {
           var actr = this.myRoomActors()[nr]
@@ -359,8 +356,8 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
         }
 
         // Create actor models
-        for (var nr in this.myRoomActors()) {
-          var actr = this.myRoomActors()[nr]
+        for (let nr in this.myRoomActors()) {
+          const actr = this.myRoomActors()[nr]
           if (nr == this.myActor().actorNr) {
             createModel(nr, false, roomModelNumber)
             isMyObjectCreated = true
@@ -377,21 +374,26 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
     }
 
     document.getElementById('roomModelNumber').disabled = true
+
     this.updateRoomInfo()
   }
-  DemoLoadBalancing.prototype.onActorLeave = function (actor) {
+
+  AppLoadBalancing.prototype.onActorLeave = function (actor) {
     // Note: It seems that the onActorLeave event may be called twice for an actor leaving.
     // onActorLeaveTimes += 1;
     // console.log("onActorLeave: actor " + actor.actorNr + " left");
     // console.log("onActorLeaveTimes:",onActorLeaveTimes);
+
     this.output('actor ' + actor.actorNr + ' left')
 
     if (actor.actorNr == this.myActor().actorNr) {
       // when left actor is me
       console.log('left actor is me...')
+
       //removeObject(actor.actorNr);
       removeModel(actor.actorNr)
-      for (var nr in this.myRoomActors()) {
+
+      for (let nr in this.myRoomActors()) {
         //var actr = this.myRoomActors()[nr];
         //removeObject(nr);
         removeModel(nr)
@@ -409,36 +411,42 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
     }
 
     document.getElementById('roomModelNumber').disabled = false
+
     this.updateRoomInfo()
   }
-  DemoLoadBalancing.prototype.sendMessage = function (message) {
-    console.log('sendMessage...')
+
+  AppLoadBalancing.prototype.sendMessage = function (message) {
     try {
       this.raiseEvent(1, {
         message: message,
         senderName: 'user' + this.myActor().actorNr,
       })
+
       this.output(
         'me[' + this.myActor().actorNr + ']: ' + message,
         this.myActor().getCustomProperty('color')
       )
     } catch (err) {
-      console.log('error: ' + err.message)
-      this.output('error: ' + err.message)
+      console.log('Send message > error ❌: ' + err.message)
+      this.output('Send message > error: ' + err.message)
     }
   }
-  DemoLoadBalancing.prototype.setupUI = function () {
-    var _this = this
+
+  AppLoadBalancing.prototype.setupUI = function () {
+    const _this = this
+
     this.logger.info('Setting up UI.')
-    var input = document.getElementById('input')
+
+    const input = document.getElementById('input')
     input.value = 'hello'
     input.focus()
-    var btnJoin = document.getElementById('joingamebtn')
+
+    const btnJoin = document.getElementById('joingamebtn')
     btnJoin.onclick = function (ev) {
       if (_this.isInLobby()) {
-        var menu = document.getElementById('gamelist')
-        var gameId = menu.children[menu.selectedIndex].textContent
-        var expectedUsers = document.getElementById('expectedusers')
+        const menu = document.getElementById('gamelist')
+        const gameId = menu.children[menu.selectedIndex].textContent
+        const expectedUsers = document.getElementById('expectedusers')
         _this.output(gameId)
         _this.joinRoom(gameId, {
           expectedUsers:
@@ -451,11 +459,12 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
       }
       return false
     }
-    var btnJoinOrCreate = document.getElementById('joinorcreategamebtn')
+
+    const btnJoinOrCreate = document.getElementById('joinorcreategamebtn')
     btnJoinOrCreate.onclick = function (ev) {
       if (_this.isInLobby()) {
-        var gameId = document.getElementById('newgamename')
-        var expectedUsers = document.getElementById('expectedusers')
+        const gameId = document.getElementById('newgamename')
+        const expectedUsers = document.getElementById('expectedusers')
         _this.output(gameId.value)
         _this.joinRoom(gameId.value.length > 0 ? gameId.value : undefined, {
           createIfNotExists: true,
@@ -469,23 +478,26 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
       }
       return false
     }
-    var btnJoinRandom = document.getElementById('joinrandomgamebtn')
+
+    const btnJoinRandom = document.getElementById('joinrandomgamebtn')
     btnJoinRandom.onclick = function (ev) {
       if (_this.isInLobby()) {
         _this.output('Random Game...')
-        var expectedUsers = document.getElementById('expectedusers')
+        const expectedUsers = document.getElementById('expectedusers')
         _this.joinRandomRoom({ expectedUsers: expectedUsers.value.split(',') })
       } else {
         _this.output('Reload page to connect to Master')
       }
       return false
     }
-    var btnNew = document.getElementById('newgamebtn')
+
+    const btnNew = document.getElementById('newgamebtn')
     btnNew.onclick = function (ev) {
       if (_this.isInLobby()) {
-        var name = document.getElementById('newgamename')
+        const name = document.getElementById('newgamename')
         _this.output('New Game')
-        var expectedUsers = document.getElementById('expectedusers')
+
+        const expectedUsers = document.getElementById('expectedusers')
         _this.createRoom(name.value.length > 0 ? name.value : undefined, {
           expectedUsers:
             expectedUsers.value.length > 0
@@ -496,9 +508,11 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
       } else {
         _this.output('Reload page to connect to Master')
       }
+
       return false
     }
-    var btnSetExpectedUsers = document.getElementById('setexpectedusers')
+
+    const btnSetExpectedUsers = document.getElementById('setexpectedusers')
     btnSetExpectedUsers.onclick = function (ev) {
       _this
         .myRoom()
@@ -506,14 +520,16 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
           document.getElementById('expectedusers').value.split(',')
         )
     }
-    var btnClearExpectedUsers = document.getElementById('clearexpectedusers')
+
+    const btnClearExpectedUsers = document.getElementById('clearexpectedusers')
     btnClearExpectedUsers.onclick = function (ev) {
       _this.myRoom().clearExpectedUsers()
     }
-    var form = document.getElementById('mainfrm')
+
+    const form = document.getElementById('mainfrm')
     form.onsubmit = function () {
       if (_this.isJoinedToRoom()) {
-        var input = document.getElementById('input')
+        const input = document.getElementById('input')
         _this.sendMessage(input.value)
         input.value = ''
         input.focus()
@@ -526,58 +542,61 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
       }
       return false
     }
-    var btn = document.getElementById('leavebtn')
+
+    let btn = document.getElementById('leavebtn')
     btn.onclick = function (ev) {
       _this.leaveRoom()
       return false
     }
     btn = document.getElementById('colorbtn')
     btn.onclick = function (ev) {
-      var ind = Math.floor(Math.random() * _this.USERCOLORS.length)
-      var color = _this.USERCOLORS[ind]
+      const ind = Math.floor(Math.random() * _this.USERCOLORS.length)
+      const color = _this.USERCOLORS[ind]
       _this.myActor().setCustomProperty('color', color)
       _this.sendMessage('... changed his / her color!')
     }
+
     this.updateRoomButtons()
   }
-  DemoLoadBalancing.prototype.output = function (str, color) {
-    // console.log("DemoLoadBalancing.prototype.output...");
-    var log = document.getElementById('theDialogue')
-    var escaped = str
+
+  AppLoadBalancing.prototype.output = function (str, color) {
+    const log = document.getElementById('theDialogue')
+
+    const escaped = str
       .replace(/&/, '&amp;')
       .replace(/</, '&lt;')
       .replace(/>/, '&gt;')
       .replace(/"/, '&quot;')
+
     if (color) {
       escaped = "<FONT COLOR='" + color + "'>" + escaped + '</FONT>'
     }
+
     log.innerHTML = log.innerHTML + escaped + '<br>'
-    //console.log("log.innerHTML:",escaped);
     log.scrollTop = log.scrollHeight
   }
-  DemoLoadBalancing.prototype.updateRoomButtons = function () {
-    var btn
-    btn = document.getElementById('newgamebtn')
+
+  AppLoadBalancing.prototype.updateRoomButtons = function () {
+    const btn = document.getElementById('newgamebtn')
     btn.disabled = !(this.isInLobby() && !this.isJoinedToRoom())
-    var canJoin =
+
+    const canJoin =
       this.isInLobby() &&
       !this.isJoinedToRoom() &&
       this.availableRooms().length > 0
-    btn = document.getElementById('joingamebtn')
-    btn.disabled = !canJoin
-    btn = document.getElementById('joinrandomgamebtn')
-    btn.disabled = !canJoin
-    btn = document.getElementById('leavebtn')
-    btn.disabled = !this.isJoinedToRoom()
-  }
-  DemoLoadBalancing.prototype.updateModelInfo = function (actor) {
-    // console.log("DemoLoadBalancing.prototype.updateModelInfo...");
 
+    document.getElementById('joingamebtn').disabled = !canJoin
+    document.getElementById('joinrandomgamebtn').disabled = !canJoin
+    document.getElementById('leavebtn').disabled = !this.isJoinedToRoom()
+  }
+
+  AppLoadBalancing.prototype.updateModelInfo = function (actor) {
     // Update actor model info
     if (this.isJoinedToRoom() && isMyObjectCreated) {
       let actorNr = actor.actorNr
       let modelName = 'model' + String(actorNr)
       let pos, rot, scl
+
       if (models.length > 0) {
         // let scene = document.querySelector('a-scene').object3D;
         models.forEach(
@@ -599,7 +618,8 @@ var DemoLoadBalancing = /** @class */ (function (_super) {
       }
     }
   }
-  return DemoLoadBalancing
+
+  return AppLoadBalancing
 })(Photon.LoadBalancing.LoadBalancingClient)
 
 let roomModelNames = [
@@ -614,20 +634,20 @@ let avatorModelNames = [
 ]
 
 // for A-Frame
-let cameraRig
-AFRAME.registerComponent('handler', {
-  init: function () {
-    console.log('A-Frame handler init...')
-    //let marker = this.el;
-    //let marker = this.el.sceneEl;
+let cameraRig = document.getElementById('camRig')
+// AFRAME.registerComponent('handler', {
+//   init: function () {
+//     console.log('A-Frame handler init...')
+//     //let marker = this.el;
+//     //let marker = this.el.sceneEl;
 
-    //document.querySelector("a-scene").renderer.gammaOutput=true;
-    document.querySelector('a-scene').renderer.outputEncoding =
-      THREE.sRGBEncoding
+//     //document.querySelector("a-scene").renderer.gammaOutput=true;
+//     document.querySelector('a-scene').renderer.outputEncoding =
+//       THREE.sRGBEncoding
 
-    cameraRig = document.getElementById('camRig')
-  },
-})
+//     cameraRig = document.getElementById('camRig')
+//   },
+// })
 
 let demo
 let displayedMenu = true
@@ -653,15 +673,6 @@ window.onload = function () {
   //     right: 0,
   //   })
   //   document.body.appendChild(stats.dom)
-
-  // Prevent the browser from expanding by double tapping
-  document.addEventListener(
-    'dblclick',
-    function (e) {
-      e.preventDefault()
-    },
-    { passive: false }
-  )
 
   let btnMenu = document.getElementById('menu')
   btnMenu.onclick = function (ev) {
@@ -751,15 +762,15 @@ window.onload = function () {
   avatarInfo = document.getElementById('avatar-info')
   roomInfo = document.getElementById('room-info')
 
-  console.log('DemoWss:', DemoWss)
-  console.log('DemoAppId:', DemoAppId)
-  console.log('DemoAppVersion:', DemoAppVersion)
+  console.log('AppInfo.Wss:', AppInfo.Wss)
+  console.log('AppInfo.AppId:', AppInfo.AppId)
+  console.log('AppInfo.AppVersion:', AppInfo.AppVersion)
 
   console.log('DemoInit: ConnectOnStart set')
   ConnectOnStart = true
 
   console.log('Demo Start...')
-  demo = new DemoLoadBalancing()
+  demo = new AppLoadBalancing()
   demo.start()
   console.log('Demo Started...')
 
