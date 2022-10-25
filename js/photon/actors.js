@@ -57,11 +57,6 @@ let roomModelSynchInfo = []
 
 let animationInfoPerModel = []
 
-let roomModelNames = [
-  '3_Room_high_1K_RL_300mW.gltf',
-  '2_Room_high_512_RL_300mW.gltf',
-  '1_Room_high_206_RL_300mW.gltf',
-]
 let avatorModelNames = [
   '3_Human_Gen_middle_1K_RL_walk1st.gltf',
   '2_Human_Gen_middle_512_RL_walk1st.gltf',
@@ -74,13 +69,9 @@ let AppLoadBalancingInstance
 let appLoadBalancing
 let displayedMenu = true
 let pushedBtnMoveForward = false
-let onActorLeaveTimes = 0
 let clock
-let stats
 let frameCount = 0
 let customPropertyUpdateFrequency = 3
-let avatarInfo
-let roomInfo
 
 // Model Info
 let direction = 'front'
@@ -445,7 +436,7 @@ function updateMyActorDirection(turnDir) {
   }
 }
 
-function updateActionWeights(actorNr, weights) {
+export function updateActionWeights(actorNr, weights) {
   // console.log("updateActionWeight:", actorNr, weight)
   animationInfoPerModel.forEach(function (modelInfo, index) {
     //console.log(index + ': ' + modelInfo.name);
@@ -664,9 +655,6 @@ const start = () => {
     updateMyActorDirection('R')
   }
 
-  avatarInfo = document.getElementById('avatar-info')
-  roomInfo = document.getElementById('room-info')
-
   console.log('ConnectOnStart set')
   updateConnectOnStart(true)
 
@@ -683,14 +671,11 @@ const start = () => {
   updateRoomModelNumber(1)
 
   function render() {
-    //demo.updatePosition();
     requestAnimationFrame(render)
-
-    // stats.begin()
 
     // Update model animation
     const mixerUpdateDelta = clock.getDelta()
-    animationInfoPerModel.forEach(function (modelInfo, index) {
+    animationInfoPerModel.forEach((modelInfo) => {
       //console.log(index + ': ' + modelInfo.name);
       let m = modelInfo.mixer
       m.update(mixerUpdateDelta)
@@ -711,8 +696,6 @@ const start = () => {
         }
       }
     })
-
-    // stats.end()
   }
   render()
 }

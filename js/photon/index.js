@@ -4,6 +4,7 @@ import Actors, {
   data,
   updateIsMyObjectCreated,
   updateRoomModelNumber,
+  updateActionWeights,
   createModel,
   removeRoomModel,
   removeModel,
@@ -353,9 +354,6 @@ const AppLoadBalancing = /** @class */ (function (_super) {
           console.log('3', 'setCustomProperty')
           this.myActor().setCustomProperty('roomModel', data.roomModelNumber)
           console.log('onActorJoin-roomModelNumber:', data.roomModelNumber)
-
-          document.getElementById('roomModelNumber').selectedIndex =
-            data.roomModelNumber - 1
         }
 
         // Create actor models
@@ -375,8 +373,6 @@ const AppLoadBalancing = /** @class */ (function (_super) {
         createModel(actor.actorNr, false, data.roomModelNumber)
       }
     }
-
-    document.getElementById('roomModelNumber').disabled = true
 
     this.updateRoomInfo()
   }
@@ -425,10 +421,10 @@ const AppLoadBalancing = /** @class */ (function (_super) {
         senderName: 'user' + this.myActor().actorNr,
       })
 
-      this.output(
-        'me[' + this.myActor().actorNr + ']: ' + message,
-        this.myActor().getCustomProperty('color')
-      )
+      // this.myActor().getCustomProperty('color')
+      // this.output('me[' + this.myActor().actorNr + ']: ' + message)
+      // this.output('me[' + this.myActor().actorNr + ']: ' + message, '#FF0000')
+      this.output(`YO: ${message}`)
     } catch (err) {
       console.log('Send message > error ❌: ' + err.message)
       this.output('Send message > error: ' + err.message)
@@ -532,7 +528,7 @@ const AppLoadBalancing = /** @class */ (function (_super) {
     const form = document.getElementById('mainfrm')
     form.onsubmit = function () {
       if (_this.isJoinedToRoom()) {
-        const input = document.getElementById('input')
+        let input = document.getElementById('input')
         _this.sendMessage(input.value)
         input.value = ''
         input.focus()
