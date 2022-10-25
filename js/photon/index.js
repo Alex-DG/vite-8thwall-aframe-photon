@@ -1,13 +1,5 @@
 import { AppInfo, __extends } from './config'
 
-// Settings
-const DemoWss = AppInfo.Wss //this['AppInfo'] && this['AppInfo']['Wss']
-const DemoAppId = AppInfo.AppId || '<no-app-id>'
-const DemoAppVersion = AppInfo.AppVersion || '1.0'
-const DemoMasterServer = AppInfo?.MasterServer // this['AppInfo'] && this['AppInfo']['MasterServer']
-const DemoNameServer = AppInfo?.NameServer // this['AppInfo'] && this['AppInfo']['NameServer']
-const DemoFbAppId = AppInfo?.FbAppid //this['AppInfo'] && this['AppInfo']['FbAppId']
-
 let ConnectOnStart = false
 
 const AppLoadBalancing = /** @class */ (function (_super) {
