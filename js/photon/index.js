@@ -1,18 +1,13 @@
 import { AppInfo, __extends } from './config'
 
 import Actors, {
-  ConnectOnStart,
-  isMyObjectCreated,
+  data,
   updateIsMyObjectCreated,
-  roomModelNumber,
   updateRoomModelNumber,
-  models,
-  position,
-  rotation,
-  scale,
   createModel,
   removeRoomModel,
   removeModel,
+  resetCameraRigInfo,
 } from './actors'
 
 const AppLoadBalancing = /** @class */ (function (_super) {
@@ -63,6 +58,8 @@ const AppLoadBalancing = /** @class */ (function (_super) {
     _this.setLogLevel(Exitgames.Common.Logger.Level.INFO)
     _this.myActor().setCustomProperty('color', _this.USERCOLORS[0])
 
+    const { position, rotation, scale } = data.placement
+
     // Set custom property for model
     _this.myActor().setCustomProperty('pos', position)
     _this.myActor().setCustomProperty('rot', rotation)
@@ -81,7 +78,7 @@ const AppLoadBalancing = /** @class */ (function (_super) {
     this.setupUI()
 
     // connect if no fb auth required
-    if (ConnectOnStart) {
+    if (data.connectOnStart) {
       if (AppInfo?.MasterServer) {
         this.setMasterServerAddress(AppInfo.MasterServer)
         this.connect()
@@ -203,7 +200,6 @@ const AppLoadBalancing = /** @class */ (function (_super) {
     //     roomModelNumber = tmpRoomModelNr;
     //     this.myActor().setCustomProperty("roomModel", roomModelNumber);
     //     console.log("onActorPropertiesChange-roomModelNumber:",roomModelNumber)
-    //     createRoomModel(roomModelNumber);
 
     //     document.getElementById("roomModelNumber").selectedIndex = roomModelNumber-1;
 
@@ -309,7 +305,6 @@ const AppLoadBalancing = /** @class */ (function (_super) {
     //         roomModelNumber = tmpRoomModelNr;
     //         this.myActor().setCustomProperty("roomModel", roomModelNumber);
     //         console.log("onActorJoin-roomModelNumber:",roomModelNumber)
-    //         createRoomModel(roomModelNumber);
 
     //         document.getElementById("roomModelNumber").selectedIndex = roomModelNumber-1;
 
@@ -328,15 +323,14 @@ const AppLoadBalancing = /** @class */ (function (_super) {
       // [1] when joined actor is only me
       console.log('🧍🏼 Joined actor is only me...')
 
-      createModel(actor.actorNr, false, roomModelNumber)
+      createModel(actor.actorNr, false, data.roomModelNumber)
 
       updateIsMyObjectCreated(true)
       let tmpRoomModelNr = actor.getCustomProperty('roomModel')
-      if (roomModelNumber != tmpRoomModelNr) {
+      if (data.roomModelNumber != tmpRoomModelNr) {
         removeRoomModel()
         console.log('2', 'setCustomProperty')
-        this.myActor().setCustomProperty('roomModel', roomModelNumber)
-        //createRoomModel(roomModelNumber);
+        this.myActor().setCustomProperty('roomModel', data.roomModelNumber)
       }
     } else {
       if (actor.actorNr == this.myActor().actorNr) {
@@ -352,33 +346,33 @@ const AppLoadBalancing = /** @class */ (function (_super) {
         }
 
         // Check other actor's room model number
-        if (tmpRoomModelNr && roomModelNumber != tmpRoomModelNr) {
+        if (tmpRoomModelNr && data.roomModelNumber != tmpRoomModelNr) {
           console.log('Change room model...')
           removeRoomModel()
           updateRoomModelNumber(tmpRoomModelNr)
           console.log('3', 'setCustomProperty')
-          this.myActor().setCustomProperty('roomModel', roomModelNumber)
-          console.log('onActorJoin-roomModelNumber:', roomModelNumber)
-          //createRoomModel(roomModelNumber);
+          this.myActor().setCustomProperty('roomModel', data.roomModelNumber)
+          console.log('onActorJoin-roomModelNumber:', data.roomModelNumber)
+
           document.getElementById('roomModelNumber').selectedIndex =
-            roomModelNumber - 1
+            data.roomModelNumber - 1
         }
 
         // Create actor models
         for (let nr in this.myRoomActors()) {
           const actr = this.myRoomActors()[nr]
           if (nr == this.myActor().actorNr) {
-            createModel(nr, false, roomModelNumber)
+            createModel(nr, false, data.roomModelNumber)
             updateIsMyObjectCreated(true)
           } else {
             // Also perform initial settings for models of actors other than yourself
-            createModel(nr, actr, roomModelNumber)
+            createModel(nr, actr, data.roomModelNumber)
           }
         }
       } else {
         // [3] when joined actor is not me
         console.log('joined actor is not me...')
-        createModel(actor.actorNr, false, roomModelNumber)
+        createModel(actor.actorNr, false, data.roomModelNumber)
       }
     }
 
@@ -601,14 +595,14 @@ const AppLoadBalancing = /** @class */ (function (_super) {
 
   AppLoadBalancing.prototype.updateModelInfo = function (actor) {
     // Update actor model info
-    if (this.isJoinedToRoom() && isMyObjectCreated) {
+    if (this.isJoinedToRoom() && data.isMyObjectCreated) {
       let actorNr = actor.actorNr
       let modelName = 'model' + String(actorNr)
       let pos, rot, scl
 
-      if (models.length > 0) {
+      if (data.models.length > 0) {
         // let scene = document.querySelector('a-scene').object3D;
-        models.forEach(
+        data.models.forEach(
           function (model, index) {
             if (model.name == modelName) {
               pos = actor.getCustomProperty('pos')

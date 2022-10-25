@@ -1,34 +1,37 @@
-export let ConnectOnStart = false
+import { getCookies } from '../utils/cookies'
 
-export let isMyObjectCreated = false
-export let roomModelNumber = -1
+export const data = {
+  connectOnStart: false,
+  isMyObjectCreated: false,
+  roomModelNumber: -1,
+  models: [],
+  placement: {
+    position: {
+      x: 0.0,
+      y: 0.0,
+      z: 0.0,
+    },
+    rotation: {
+      x: 0.0,
+      y: 0.0,
+      z: 0.0,
+    },
+    scale: {
+      x: 1.0,
+      y: 1.0,
+      z: 1.0,
+    },
+  },
+}
 
-export const updateConnectOnStart = (v) => {
-  ConnectOnStart = v
+const updateConnectOnStart = (v) => {
+  data['connectOnStart'] = v
 }
 export const updateIsMyObjectCreated = (v) => {
-  isMyObjectCreated = v
+  data['isMyObjectCreated'] = v
 }
 export const updateRoomModelNumber = (v) => {
-  roomModelNumber = v
-}
-
-export let models = []
-
-export let position = {
-  x: 0.0,
-  y: 0.0,
-  z: 0.0,
-}
-export let rotation = {
-  x: 0.0,
-  y: 0.0,
-  z: 0.0,
-}
-export let scale = {
-  x: 1.0,
-  y: 1.0,
-  z: 1.0,
+  data['roomModelNumber'] = v
 }
 
 let posSmoothing = {
@@ -123,7 +126,7 @@ function keyup(event) {
     // demo.myActor().setCustomProperty("actionWeights", actionWeights);
     // updateActionWeights(demo.myActor().actorNr, actionWeights)
 
-    if (appLoadBalancing.isJoinedToRoom() && isMyObjectCreated) {
+    if (appLoadBalancing.isJoinedToRoom() && data.isMyObjectCreated) {
       appLoadBalancing.updateRoomInfo()
     }
   }
@@ -177,20 +180,14 @@ export function createModel(actorNr, actor = false, avatorNr) {
   //let model = null;
   const loader = new THREE.GLTFLoader()
   const dracoLoader = new THREE.DRACOLoader()
-  console.log('./assets/avators/raw/' + avatorModelNames[avatorNr - 1])
+
   dracoLoader.setDecoderPath(
     'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/js/libs/draco/'
   )
-  console.log({
-    modelSrc: '../../assets/avators/raw/' + avatorModelNames[avatorNr - 1],
-  })
+
   loader.setDRACOLoader(dracoLoader)
   loader.load(
-    // resource URL
-    // "./assets/Human_Gen_3396Verts_512.glb", // "./Xbot.glb"
-    // "./assets/avators/baked/" + avatorModelNames[avatorNr-1],
-    '../../assets/avators/raw/' + avatorModelNames[avatorNr - 1],
-    // called when the resource is loaded
+    '../../assets/avatars/raw/' + avatorModelNames[avatorNr - 1],
     function (gltf) {
       let model = gltf.scene
       console.log({ model, actorNr })
@@ -276,7 +273,7 @@ export function createModel(actorNr, actor = false, avatorNr) {
       }
 
       scene.add(model)
-      models.push(model)
+      data.models.push(model)
 
       // Set initial model info
       if (actor) {
@@ -297,7 +294,7 @@ export function createModel(actorNr, actor = false, avatorNr) {
 
 export function removeModel(actorNr) {
   console.log('removeModel:', actorNr)
-  console.log('-> models-length:', models.length)
+  console.log('-> models-length:', data.models.length)
   console.log('-> roomModelSynchInfo.length:', roomModelSynchInfo.length)
 
   // Remove room model synch Info
@@ -321,10 +318,10 @@ export function removeModel(actorNr) {
 
   // Remove actor model
   console.log('Remove actor model...')
-  if (models.length > 0) {
+  if (data.models.length > 0) {
     let scene = document.querySelector('a-scene').object3D
     let removeIndex = -1
-    models.forEach(function (model, index) {
+    data.models.forEach(function (model, index) {
       console.log(index + ': ' + model.name)
       if (model.name == 'model' + String(actorNr)) {
         //console.log("remove...");
@@ -335,7 +332,7 @@ export function removeModel(actorNr) {
       }
     })
     if (removeIndex >= 0) {
-      models.splice(removeIndex, 1)
+      data.models.splice(removeIndex, 1)
     } else {
       console.log('There is no specified model...')
     }
@@ -344,27 +341,14 @@ export function removeModel(actorNr) {
   }
 }
 
-// function startAnimation(actorNr, actionIndex){
-//     //console.log("startAnimation:", actorNr);
-
-//     animationInfoPerModel.forEach(function(modelInfo, index) {
-//         //console.log(index + ': ' + modelInfo.name);
-//         if(modelInfo.name == "model"+String(actorNr)){
-//             // let m = modelInfo.mixer;
-//             modelInfo.mixer.stopAllAction();
-//             modelInfo.actions[actionIndex].setLoop(THREE.LoopOnce, 1); //LoopOnce, LoopRepeat, LoopPingPong
-//             modelInfo.actions[actionIndex].clampWhenFinished = true;
-//             modelInfo.actions[actionIndex].play();
-//         }
-//     });
-// }
-
 function updateMyActorModelInfo() {
   // console.log("updateMyActorModelInfo...")
   let myActorNr = appLoadBalancing.myActor().actorNr
-  models.forEach(function (model, index) {
+  data.models.forEach(function (model, index) {
     //console.log(index + ': ' + model.name);
     if (model.name == 'model' + String(myActorNr)) {
+      let { position, rotation, scale } = data.placement
+
       // Move the model smoothly
       posSmoothing.acceleration.z -=
         posSmoothing.velocity.z * posSmoothing.friction.z
@@ -476,74 +460,14 @@ function updateActionWeights(actorNr, weights) {
 function updateMyActorCustomProperty() {
   // console.log("updateMyActorCustomProperty...")
   if (appLoadBalancing) {
+    const { position, rotation, scale } = data.placement
+
     // Set custom property for Photon
     appLoadBalancing.myActor().setCustomProperty('pos', position)
     appLoadBalancing.myActor().setCustomProperty('rot', rotation)
     appLoadBalancing.myActor().setCustomProperty('scale', scale)
     appLoadBalancing.myActor().setCustomProperty('actionWeights', actionWeights)
   }
-}
-
-function createRoomModel(roomNr) {
-  console.log('createRoomModel:', roomNr)
-
-  // Set a flag to determine if the room model is synchronized between each user
-  roomModelSynchInfo.forEach(function (info, index) {
-    if (info.actorNr == appLoadBalancing.myActor().actorNr) {
-      info.same = true
-    } else {
-      info.same = false
-    }
-  })
-
-  let scene = document.querySelector('a-scene').object3D
-  let roomModelName = 'room' + String(roomNr)
-  // console.log("./assets/rooms/raw/" + roomModelNames[roomNr-1]);
-  //let model = null;
-  const loader = new THREE.GLTFLoader()
-  const dracoLoader = new THREE.DRACOLoader()
-  dracoLoader.setDecoderPath(
-    'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/js/libs/draco/'
-  )
-  loader.setDRACOLoader(dracoLoader)
-  loader.load(
-    // resource URL
-    '../../assets/rooms/raw/' + roomModelNames[roomNr - 1],
-    function (gltf) {
-      roomInfo.textContent = 'idling...'
-
-      setTimeout(() => {
-        let model = gltf.scene
-        model.name = 'room' + String(roomNr)
-        model.position.set(0, 0, 0)
-        model.rotation.set(0, 0, 0)
-        model.scale.set(1.0, 1.0, 1.0)
-
-        model.traverse(function (child) {
-          if (child.isMesh) {
-            //console.log("isMesh...");
-            child.castShadow = true
-          }
-        })
-
-        roomModel = model
-        scene.add(roomModel)
-
-        roomInfo.textContent = 'room model added to scene'
-      }, 2.0 * 1000)
-    },
-    // called while loading is progressing
-    function (xhr) {
-      console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
-      roomInfo.textContent = (xhr.loaded / xhr.total) * 100 + '% loaded'
-    },
-    // called when loading has error
-    function (error) {
-      console.log('An error happened')
-      console.log(error)
-      roomInfo.textContent = error
-    }
-  )
 }
 
 export function removeRoomModel() {
@@ -605,7 +529,7 @@ function disposeObjects(model) {
   })
 }
 
-function resetCameraRigInfo() {
+export function resetCameraRigInfo() {
   console.log('resetCameraRigInfo...')
   if (cameraRig) {
     cameraRig.object3D.position.set(0, 1.6, 0)
@@ -616,9 +540,10 @@ function resetCameraRigInfo() {
 function resetMyActorPosition() {
   console.log('resetMyActorPosition...')
   let myActorNr = appLoadBalancing.myActor().actorNr
-  models.forEach(function (model, index) {
+  data.models.forEach(function (model, index) {
     //console.log(index + ': ' + model.name);
     if (model.name == 'model' + String(myActorNr)) {
+      let { position, rotation, scale } = data.placement
       direction = 'front'
 
       posSmoothing.velocity.x = 0.0
@@ -650,36 +575,9 @@ function resetMyActorPosition() {
   })
 }
 
-function changeAllACtorModel(avatorNr) {
-  console.log('changeAllACtorModel:', avatorNr)
-  let modelNames = []
-  if (models.length > 0) {
-    // Remove all actor models
-    let scene = document.querySelector('a-scene').object3D
-    models.forEach(function (model, index) {
-      console.log(index + ': ' + model.name)
-      modelNames.push(model.name)
-
-      // Remove model
-      scene.remove(model)
-      disposeObjects(model)
-    })
-
-    // Recreate all actor models
-    models = []
-    modelNames.forEach(function (modelName, index) {
-      console.log(index + ': ' + modelName)
-      let nr = parseInt(modelName.substr(5), 10)
-      let actr = appLoadBalancing.myRoomActors()[nr]
-      createModel(nr, actr, avatorNr)
-    })
-  } else {
-    console.log('There is no model...')
-  }
-}
-
 function saveMyActorInfoByCookie() {
-  console.log('saveMyActorInfoByCookie...')
+  const { position, rotation } = data.placement
+
   document.cookie = 'posX=' + String(position.x)
   document.cookie = 'posY=' + String(position.y)
   document.cookie = 'posZ=' + String(position.z)
@@ -700,41 +598,26 @@ function saveMyActorInfoByCookie() {
 function loadMyActorInfoByCookie() {
   console.log('loadMyActorInfoByCookie...')
 
-  let actorInfo = GetCookies()
+  let actorInfo = getCookies()
   if (actorInfo['posX']) {
-    // console.log("actorInfo['posX']:",actorInfo['posX']);
-    // console.log("actorInfo['rotY']:",actorInfo['rotY']);
-    // console.log("direction:",actorInfo['direction'])
+    let { position, rotation } = data.placement
 
     posSmoothing.velocity.x = 0.0
     posSmoothing.velocity.z = 0.0
     posSmoothing.velocity.y = 0.0
+
     position.x = parseFloat(actorInfo['posX'], 10)
     position.y = parseFloat(actorInfo['posY'], 10)
     position.z = parseFloat(actorInfo['posZ'], 10)
+
     rotation.x = parseFloat(actorInfo['rotX'], 10)
     rotation.y = parseFloat(actorInfo['rotY'], 10)
     rotation.z = parseFloat(actorInfo['rotZ'], 10)
+
     direction = actorInfo['direction']
   } else {
     console.log("-> Can't loadMyActorInfoByCookie...")
   }
-}
-
-function GetCookies() {
-  let result = new Array()
-
-  let allcookies = document.cookie
-  if (allcookies != '') {
-    let cookies = allcookies.split('; ')
-    for (let i = 0; i < cookies.length; i++) {
-      let cookie = cookies[i].split('=')
-
-      // Add the cookie name as a key to the array
-      result[cookie[0]] = decodeURIComponent(cookie[1])
-    }
-  }
-  return result
 }
 
 const start = () => {
@@ -756,48 +639,6 @@ const start = () => {
   let btnActorPosLoad = document.getElementById('actorPosLoad')
   btnActorPosLoad.onclick = function (ev) {
     loadMyActorInfoByCookie()
-  }
-
-  let selectBtnRoom = document.getElementById('roomModelNumber')
-  // Init select box info
-  roomModelNames.forEach(function (name, index) {
-    console.log('index:' + index + ' name:' + name)
-    let option = document.createElement('option')
-    option.setAttribute('value', index)
-    option.innerHTML = name
-    selectBtnRoom.appendChild(option)
-  })
-  // Init select box event
-  selectBtnRoom.onchange = function (ev) {
-    // let tmpRoomModelNr = parseInt(document.getElementById("roomModelNumber").value, 10) + 1;
-    // //console.log("selectBtnRoom.onchange:","selectedIndex=",document.getElementById("roomModelNumber").selectedIndex,",value=",document.getElementById("roomModelNumber").value,",tmpRoomModelNr=",tmpRoomModelNr)
-    // if(roomModelNumber != tmpRoomModelNr){
-    //     removeRoomModel();
-    //     roomModelNumber = tmpRoomModelNr;
-    //     demo.myActor().setCustomProperty("roomModel", roomModelNumber);
-    //     console.log("selectBtnRoom.onchange-roomModelNumber:",roomModelNumber)
-    //     createRoomModel(roomModelNumber);
-
-    //     changeAllACtorModel(roomModelNumber)
-
-    //     demo.updateRoomInfo();
-    // }
-
-    roomModelNumber =
-      parseInt(document.getElementById('roomModelNumber').value, 10) + 1
-    //demo.myActor().setCustomProperty("roomModel", roomModelNumber);
-    appLoadBalancing.updateRoomInfo()
-  }
-  // Prevents unexpected room changes due to the focus remaining in the select box
-  selectBtnRoom.onkeydown = function (e) {
-    if (
-      e.key == 'ArrowUp' ||
-      e.key == 'ArrowDown' ||
-      e.key == 'ArrowLeft' ||
-      e.key == 'ArrowRight'
-    ) {
-      e.preventDefault()
-    }
   }
 
   // Init actor gui button
@@ -829,21 +670,17 @@ const start = () => {
   console.log('ConnectOnStart set')
   updateConnectOnStart(true)
 
-  console.log('Demo Start...')
   //   demo = new AppLoadBalancing()
   //   demo.start()
   appLoadBalancing = new AppLoadBalancingInstance()
   appLoadBalancing.start()
 
-  console.log('Demo Started...')
+  console.log('✅', 'LoadBalancing started!')
 
   clock = new THREE.Clock()
 
   // Set room model
-  roomModelNumber = 1
-  setTimeout(() => {
-    // createRoomModel(roomModelNumber)
-  }, 3.0 * 1000)
+  updateRoomModelNumber(1)
 
   function render() {
     //demo.updatePosition();
@@ -859,7 +696,7 @@ const start = () => {
       m.update(mixerUpdateDelta)
 
       // Update model info
-      if (appLoadBalancing.isJoinedToRoom() && isMyObjectCreated) {
+      if (appLoadBalancing.isJoinedToRoom() && data.isMyObjectCreated) {
         if (pushedBtnMoveForward) {
           movingForward()
         }
@@ -888,14 +725,3 @@ const Actors = {
 }
 
 export default Actors
-
-// Init stats.js
-//   stats = new Stats()
-//   stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
-//   Object.assign(stats.dom.style, {
-//     position: 'fixed',
-//     height: 'max-content',
-//     left: 'auto',
-//     right: 0,
-//   })
-//   document.body.appendChild(stats.dom)
