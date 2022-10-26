@@ -1,15 +1,15 @@
-import { AppInfo, __extends, colors } from './config'
+import { AppInfo, __extends, colors } from './photonConfig'
 
-import Actors, {
-  data,
-  updateIsMyObjectCreated,
-  updateRoomModelNumber,
-  updateActionWeights,
-  createModel,
-  removeRoomModel,
+import Player from './player'
+import Model from './player/Model'
+
+import {
+  store,
   removeModel,
   resetCameraRigInfo,
-} from './actors'
+  updateActionWeights,
+  updateIsMyObjectCreated,
+} from './player/data'
 
 var AppLoadBalancing = /** @class */ (function (_super) {
   __extends(AppLoadBalancing, _super)
@@ -45,7 +45,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     _this.setLogLevel(Exitgames.Common.Logger.Level.INFO)
     _this.myActor().setCustomProperty('color', _this.USERCOLORS[0])
 
-    let { position, rotation, scale } = data.placement
+    let { position, rotation, scale } = store.placement
 
     // Set custom property for model
     _this.myActor().setCustomProperty('pos', position)
@@ -61,7 +61,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     console.log('AppLoadBalancing start...')
     this.setupUI()
     // connect if no fb auth required
-    if (data.connectOnStart) {
+    if (store.connectOnStart) {
       if (AppInfo.MasterServer) {
         this.setMasterServerAddress(AppInfo.MasterServer)
         this.connect()
@@ -260,13 +260,13 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     //     for (var nr in this.myRoomActors()) {
     //         var actr = this.myRoomActors()[nr];
     //         //createObject(nr);
-    //         //createModel(nr);
+    //         //Model.createModel(nr);
 
     //         if(nr == this.myActor().actorNr){
-    //             createModel(nr, false, roomModelNumber);
+    //             Model.createModel(nr, false, roomModelNumber);
     //         }else{
     //             // Also perform initial settings for models of actors other than yourself
-    //             createModel(nr, actr, roomModelNumber);
+    //             Model.createModel(nr, actr, roomModelNumber);
     //             tmpRoomModelNr = actr.getCustomProperty("roomModel");
     //         }
     //     }
@@ -287,7 +287,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     //     }
     // }else{ // when joined actor is not me
     //     console.log("joined actor is not me...");
-    //     createModel(actor.actorNr, false, roomModelNumber);
+    //     Model.createModel(actor.actorNr, false, roomModelNumber);
     // }
 
     // Create objects according to the number of actors
@@ -297,12 +297,12 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     ) {
       // [1] when joined actor is only me
       console.log('joined actor is only me...')
-      createModel(actor.actorNr, false, data.roomModelNumber)
+      Model.createModel(actor.actorNr)
       updateIsMyObjectCreated(true)
       let tmpRoomModelNr = actor.getCustomProperty('roomModel')
-      if (data.roomModelNumber != tmpRoomModelNr) {
-        removeRoomModel()
-        this.myActor().setCustomProperty('roomModel', data.roomModelNumber)
+      if (store.roomModelNumber != tmpRoomModelNr) {
+        // removeRoomModel()
+        this.myActor().setCustomProperty('roomModel', store.roomModelNumber)
         //createRoomModel(roomModelNumber);
       }
     } else {
@@ -318,32 +318,32 @@ var AppLoadBalancing = /** @class */ (function (_super) {
         }
 
         // Check other actor's room model number
-        if (tmpRoomModelNr && data.roomModelNumber != tmpRoomModelNr) {
+        if (tmpRoomModelNr && store.roomModelNumber != tmpRoomModelNr) {
           console.log('Change room model...')
-          removeRoomModel()
+          // removeRoomModel()
           updateRoomModelNumber(tmpRoomModelNr)
-          this.myActor().setCustomProperty('roomModel', data.roomModelNumber)
-          console.log('onActorJoin-roomModelNumber:', data.roomModelNumber)
+          this.myActor().setCustomProperty('roomModel', store.roomModelNumber)
+          console.log('onActorJoin-roomModelNumber:', store.roomModelNumber)
           //createRoomModel(roomModelNumber);
           // document.getElementById('roomModelNumber').selectedIndex =
-          //   data.roomModelNumber - 1
+          //   store.roomModelNumber - 1
         }
 
         // Create actor models
         for (var nr in this.myRoomActors()) {
           var actr = this.myRoomActors()[nr]
           if (nr == this.myActor().actorNr) {
-            createModel(nr, false, data.roomModelNumber)
+            Model.createModel(nr)
             updateIsMyObjectCreated(true)
           } else {
             // Also perform initial settings for models of actors other than yourself
-            createModel(nr, actr, data.roomModelNumber)
+            Model.createModel(nr, actr)
           }
         }
       } else {
         // [3] when joined actor is not me
         console.log('joined actor is not me...')
-        createModel(actor.actorNr, false, data.roomModelNumber)
+        Model.createModel(actor.actorNr)
       }
     }
 
@@ -545,13 +545,13 @@ var AppLoadBalancing = /** @class */ (function (_super) {
 
   AppLoadBalancing.prototype.updateModelInfo = function (actor) {
     // Update actor model info
-    if (this.isJoinedToRoom() && data.isMyObjectCreated) {
+    if (this.isJoinedToRoom() && store.isMyObjectCreated) {
       let actorNr = actor.actorNr
       let modelName = 'model' + String(actorNr)
       let pos, rot, scl
-      if (data.models.length > 0) {
+      if (store.models.length > 0) {
         // let scene = document.querySelector('a-scene').object3D;
-        data.models.forEach(
+        store.models.forEach(
           function (model, index) {
             if (model.name == modelName) {
               pos = actor.getCustomProperty('pos')
@@ -573,4 +573,5 @@ var AppLoadBalancing = /** @class */ (function (_super) {
   return AppLoadBalancing
 })(Photon.LoadBalancing.LoadBalancingClient)
 
-Actors.init(AppLoadBalancing)
+// Actors.init(AppLoadBalancing)
+Player.start(AppLoadBalancing)
