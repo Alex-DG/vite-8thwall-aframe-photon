@@ -1,4 +1,4 @@
-import { AppInfo, __extends } from './config'
+import { AppInfo, __extends, colors } from './config'
 
 import Actors, {
   data,
@@ -25,14 +25,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
         AppInfo.AppVersion
       ) || this
     _this.logger = new Exitgames.Common.Logger('App:')
-    _this.USERCOLORS = [
-      '#FF0000',
-      '#00AA00',
-      '#0000FF',
-      '#FFFF00',
-      '#00FFFF',
-      '#FF00FF',
-    ]
+    _this.USERCOLORS = colors
     // uncomment to use Custom Authentication
     // this.setCustomAuthentication("username=" + "yes" + "&token=" + "yes");
     _this.output(
@@ -332,8 +325,8 @@ var AppLoadBalancing = /** @class */ (function (_super) {
           this.myActor().setCustomProperty('roomModel', data.roomModelNumber)
           console.log('onActorJoin-roomModelNumber:', data.roomModelNumber)
           //createRoomModel(roomModelNumber);
-          document.getElementById('roomModelNumber').selectedIndex =
-            data.roomModelNumber - 1
+          // document.getElementById('roomModelNumber').selectedIndex =
+          //   data.roomModelNumber - 1
         }
 
         // Create actor models
@@ -354,7 +347,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
       }
     }
 
-    document.getElementById('roomModelNumber').disabled = true
+    // document.getElementById('roomModelNumber').disabled = true
     this.updateRoomInfo()
   }
   AppLoadBalancing.prototype.onActorLeave = function (actor) {
@@ -386,7 +379,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
       removeModel(actor.actorNr)
     }
 
-    document.getElementById('roomModelNumber').disabled = false
+    // document.getElementById('roomModelNumber').disabled = false
     this.updateRoomInfo()
   }
 

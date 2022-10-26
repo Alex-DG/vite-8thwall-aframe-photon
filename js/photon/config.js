@@ -33,3 +33,12 @@ export const __extends =
         b === null ? Object.create(b) : ((__.prototype = b.prototype), new __())
     }
   })()
+
+export const colors = [
+  '#FF0000',
+  '#00AA00',
+  '#0000FF',
+  '#FFFF00',
+  '#00FFFF',
+  '#FF00FF',
+]
