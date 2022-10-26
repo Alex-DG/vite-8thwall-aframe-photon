@@ -23,7 +23,7 @@ class PlayerInstance {
     const appLoadBalancing = this.appLoadBalancing
 
     Menu.init()
-    Model.init()
+    Model.init({ appLoadBalancing })
     Controls.init({ appLoadBalancing })
     MyActor.init({ appLoadBalancing })
 

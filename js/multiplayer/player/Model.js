@@ -101,7 +101,7 @@ class ModelInstance {
 
       // Set initial model info
       if (actor) {
-        appLoadBalancing.updateModelInfo(actor)
+        this.appLoadBalancing.updateModelInfo(actor)
       }
 
       console.log('✅', 'Model created!')
@@ -110,7 +110,8 @@ class ModelInstance {
     }
   }
 
-  init() {
+  init({ appLoadBalancing }) {
+    this.appLoadBalancing = appLoadBalancing
     this.scene = document.querySelector('a-scene').object3D
     this.loader = new THREE.GLTFLoader()
 
