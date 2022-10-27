@@ -1,10 +1,18 @@
 import { store } from './data'
 
 class ModelInstance {
-  async createModel(actorNr, actor = undefined) {
+  async createModel(actorNr, options) {
+    const { actor } = options || { actor: undefined }
+
+    const roomActor = this.appLoadBalancing.myRoomActors()[actorNr]
+    const observer = roomActor.customProperties.observer
+    // const observer = roomActor.getCustomProperty('observer')
+
     console.log('------------------------')
     console.log('----- CREATE MODEL -----')
     console.log('------------------------')
+
+    console.log({ roomActor, actorNr, observer })
 
     try {
       // Set a flag to determine if the room model is synchronized between each user
@@ -40,9 +48,10 @@ class ModelInstance {
         if (child.isMesh) {
           child.castShadow = true
           // Change T-Shirt color
-          // if (child.name === 'HG_TSHIRT_Male001') {
-          //   child.material.color.setHex(Math.random() * 0xffffff)
-          // }
+          if (observer && child.name === 'HG_TSHIRT_Male001') {
+            child.material.color.setHex(0xff0000)
+            // child.material.color.setHex(Math.random() * 0xffffff)
+          }
         }
       })
 

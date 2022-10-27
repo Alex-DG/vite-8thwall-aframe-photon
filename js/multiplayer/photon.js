@@ -9,6 +9,7 @@ import {
   resetCameraRigInfo,
   updateActionWeights,
   updateIsMyObjectCreated,
+  updateRoomModelNumber,
 } from './player/data'
 
 var AppLoadBalancing = /** @class */ (function (_super) {
@@ -251,7 +252,33 @@ var AppLoadBalancing = /** @class */ (function (_super) {
   }
 
   AppLoadBalancing.prototype.onActorJoin = function (actor) {
+    console.log('------------------------')
+    console.log('----- ACTOR JOINED -----')
+    console.log('------------------------')
+    console.log({ actor, actorNr: actor.actorNr })
+
     this.output('actor ' + actor.actorNr + ' joined')
+
+    // console.log({
+    //   actor,
+    //   observer: store.isObserver,
+    //   customProps: actor.getCustomProperties(),
+    //   roomProps: this.myRoom().getCustomProperties(),
+    //   engine: this,
+    // })
+
+    const observer = store.isObserver || actor.getCustomProperty('observer')
+    console.log('|__ Observer ', observer)
+    // console.log({
+    //   observer: actor.getCustomProperty('observer'),
+    //   observer2: actor.customProperties.observer,
+    //   customProperties: actor.getCustomProperties(),
+    // })
+
+    if (observer) {
+      actor.setCustomProperty('observer', true) // attach observer role
+    }
+    store.isObserver = false // reset observer value
 
     // // Create objects according to the number of actors
     // if(actor.actorNr == this.myActor().actorNr){ // when joined actor is me
@@ -296,7 +323,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
       actor.actorNr == this.myActor().actorNr
     ) {
       // [1] when joined actor is only me
-      console.log('joined actor is only me...')
+      console.log('🤖', '[ Joined actor is only me! ]')
       Model.createModel(actor.actorNr)
       updateIsMyObjectCreated(true)
       let tmpRoomModelNr = actor.getCustomProperty('roomModel')
@@ -308,7 +335,8 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     } else {
       if (actor.actorNr == this.myActor().actorNr) {
         // [2] when joined actor is me
-        console.log('joined actor is me...')
+        console.log('🤖', '[ Joined actor is me ]')
+
         let tmpRoomModelNr
         for (var nr in this.myRoomActors()) {
           var actr = this.myRoomActors()[nr]
@@ -329,6 +357,8 @@ var AppLoadBalancing = /** @class */ (function (_super) {
           //   store.roomModelNumber - 1
         }
 
+        console.log({ myRoomActors: this.myRoomActors() })
+
         // Create actor models
         for (var nr in this.myRoomActors()) {
           var actr = this.myRoomActors()[nr]
@@ -337,7 +367,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
             updateIsMyObjectCreated(true)
           } else {
             // Also perform initial settings for models of actors other than yourself
-            Model.createModel(nr, actr)
+            Model.createModel(nr, { actor: actr })
           }
         }
       } else {
@@ -347,7 +377,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
       }
     }
 
-    // document.getElementById('roomModelNumber').disabled = true
+    // store.isObserver = false
     this.updateRoomInfo()
   }
   AppLoadBalancing.prototype.onActorLeave = function (actor) {
@@ -412,6 +442,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
         var gameId = menu.children[menu.selectedIndex].textContent
         var expectedUsers = document.getElementById('expectedusers')
         _this.output(gameId)
+
         _this.joinRoom(gameId, {
           expectedUsers:
             expectedUsers.value.length > 0
@@ -423,6 +454,44 @@ var AppLoadBalancing = /** @class */ (function (_super) {
       }
       return false
     }
+
+    var btnObserver = document.getElementById('observegamebtn')
+    btnObserver.onclick = function (ev) {
+      if (_this.isInLobby()) {
+        var menu = document.getElementById('gamelist')
+        var gameId = menu.children[menu.selectedIndex].textContent
+        var expectedUsers = document.getElementById('expectedusers')
+
+        console.log('===== OBSERVE ROOM =====')
+
+        store.isObserver = true
+
+        _this.output(gameId)
+
+        if (store.isObserver) {
+          _this.output('Joining as observer')
+        }
+
+        _this.joinRoom(
+          gameId,
+          {
+            expectedUsers:
+              expectedUsers.value.length > 0
+                ? expectedUsers.value.split(',')
+                : undefined,
+          },
+          {
+            customGameProperties: {
+              observer: true,
+            },
+          }
+        )
+      } else {
+        _this.output('Reload page to connect to Master')
+      }
+      return false
+    }
+
     var btnJoinOrCreate = document.getElementById('joinorcreategamebtn')
     btnJoinOrCreate.onclick = function (ev) {
       if (_this.isInLobby()) {
@@ -536,6 +605,8 @@ var AppLoadBalancing = /** @class */ (function (_super) {
       !this.isJoinedToRoom() &&
       this.availableRooms().length > 0
     btn = document.getElementById('joingamebtn')
+    btn.disabled = !canJoin
+    btn = document.getElementById('observegamebtn')
     btn.disabled = !canJoin
     btn = document.getElementById('joinrandomgamebtn')
     btn.disabled = !canJoin
