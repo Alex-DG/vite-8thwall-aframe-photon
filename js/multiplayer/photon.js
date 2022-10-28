@@ -11,6 +11,7 @@ import {
   updateIsMyObjectCreated,
   updateRoomModelNumber,
 } from './player/data'
+import EventEmitter from '../utils/EventEmitter'
 
 var AppLoadBalancing = /** @class */ (function (_super) {
   __extends(AppLoadBalancing, _super)
@@ -49,6 +50,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     let { position, rotation, scale } = store.placement
 
     // Set custom property for model
+    _this.myActor().setCustomProperty('observer', false)
     _this.myActor().setCustomProperty('pos', position)
     _this.myActor().setCustomProperty('rot', rotation)
     _this.myActor().setCustomProperty('scale', scale)
@@ -161,7 +163,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
   }
 
   AppLoadBalancing.prototype.onActorPropertiesChange = function (actor) {
-    //console.log("onActorPropertiesChange...");
+    // console.log('onActorPropertiesChange...')
     this.updateModelInfo(actor)
     this.updateRoomInfo()
 
@@ -247,6 +249,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
   }
 
   AppLoadBalancing.prototype.onJoinRoom = function () {
+    console.log('onJoinRoom')
     this.output('Game ' + this.myRoom().name + ' joined')
     this.updateRoomInfo()
   }
@@ -255,30 +258,117 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     console.log('------------------------')
     console.log('----- ACTOR JOINED -----')
     console.log('------------------------')
-    console.log({ actor, actorNr: actor.actorNr })
-
     this.output('actor ' + actor.actorNr + ' joined')
 
-    // console.log({
-    //   actor,
-    //   observer: store.isObserver,
-    //   customProps: actor.getCustomProperties(),
-    //   roomProps: this.myRoom().getCustomProperties(),
-    //   engine: this,
-    // })
+    const actorNr = actor.actorNr
+    let observer = actorNr === 2
 
-    const observer = store.isObserver || actor.getCustomProperty('observer')
-    console.log('|__ Observer ', observer)
-    // console.log({
-    //   observer: actor.getCustomProperty('observer'),
-    //   observer2: actor.customProperties.observer,
-    //   customProperties: actor.getCustomProperties(),
-    // })
+    const createCallback = (actor, obs) => {
+      const isObserver = obs
+      console.log('createCallback', { isObserver })
+      const createFunc = isObserver ? Model.createObserver : Model.createModel
 
-    if (observer) {
-      actor.setCustomProperty('observer', true) // attach observer role
+      // Create objects according to the number of actors
+      if (
+        this.myRoomActorCount() <= 1 &&
+        actor.actorNr == this.myActor().actorNr
+      ) {
+        // [1] when joined actor is only me
+        console.log('🤖', '[ Joined actor is only me! ]')
+        Model.createModel(actor.actorNr)
+        updateIsMyObjectCreated(true)
+        let tmpRoomModelNr = actor.getCustomProperty('roomModel')
+        if (store.roomModelNumber != tmpRoomModelNr) {
+          // removeRoomModel()
+          this.myActor().setCustomProperty('roomModel', store.roomModelNumber)
+          //createRoomModel(roomModelNumber);
+        }
+      } else {
+        if (actor.actorNr == this.myActor().actorNr) {
+          // [2] when joined actor is me
+          console.log('🤖', '[ Joined actor is me ]')
+
+          let tmpRoomModelNr
+          for (var nr in this.myRoomActors()) {
+            var actr = this.myRoomActors()[nr]
+            if (nr != this.myActor().actorNr) {
+              tmpRoomModelNr = actr.getCustomProperty('roomModel')
+            }
+          }
+
+          // Check other actor's room model number
+          if (tmpRoomModelNr && store.roomModelNumber != tmpRoomModelNr) {
+            console.log('Change room model...')
+            // removeRoomModel()
+            updateRoomModelNumber(tmpRoomModelNr)
+            this.myActor().setCustomProperty('roomModel', store.roomModelNumber)
+            console.log('onActorJoin-roomModelNumber:', store.roomModelNumber)
+            //createRoomModel(roomModelNumber);
+            // document.getElementById('roomModelNumber').selectedIndex =
+            //   store.roomModelNumber - 1
+          }
+
+          console.log({ myRoomActors: this.myRoomActors() })
+
+          // Create actor models
+          for (var nr in this.myRoomActors()) {
+            var actr = this.myRoomActors()[nr]
+            if (nr == this.myActor().actorNr) {
+              createFunc(nr, { observer: isObserver })
+              updateIsMyObjectCreated(true)
+            } else {
+              // Also perform initial settings for models of actors other than yourself
+              Model.createModel(nr, { actor: actr })
+            }
+          }
+        } else {
+          // [3] when joined actor is not me
+          console.log('joined actor is not me...')
+          createFunc(actor.actorNr)
+        }
+      }
+
+      // store.isObserver = false
+      this.updateRoomInfo()
     }
-    store.isObserver = false // reset observer value
+
+    createCallback(actor, observer)
+
+    // const observer = store.isObserver || actor.getCustomProperty('observer')
+    // console.log('|__ Observer ', { observer, actorNr: actor.actorNr })
+
+    // actor.onPropertiesChange = (data) => {
+    //   if (data.hasOwnProperty('observer')) {
+    //     console.log('onPropertiesChange', { observer: data.observer })
+    //   }
+    //   // console.log('onprop change >', { data })
+    // }
+    // const defaultCb = actor.onPropertiesChange
+    // actor.onPropertiesChange = (data) => {
+    //   if (data.observer) {
+    //     console.log('📩', '[ change ]', {
+    //       observer: data.observer,
+    //       actorNr: actor.actorNr,
+    //     })
+    //     actor.onPropertiesChange = defaultCb
+    //     createCallback(actor)
+    //   }
+
+    //   if (!data.observer) {
+    //     console.log('📩', '[ change ]', {
+    //       observer: data.observer,
+    //       actorNr: actor.actorNr,
+    //     })
+    //     actor.onPropertiesChange = defaultCb
+    //     createCallback(actor)
+    //   }
+    // }
+
+    // ----
+
+    // if (observer) actor.setCustomProperty('observer', true) // attach observer role
+    // // // actor.setCustomProperty('observer', observer)
+    // store.isObserver = false // reset observer value
 
     // // Create objects according to the number of actors
     // if(actor.actorNr == this.myActor().actorNr){ // when joined actor is me
@@ -317,68 +407,78 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     //     Model.createModel(actor.actorNr, false, roomModelNumber);
     // }
 
+    // console.log({ actorNr, observer })
+    // if (observer) {
+    //   actor.setCustomProperty('observer', true)
+    //   Model.createObserver(actorNr, observer)
+    //   this.updateRoomInfo()
+    //   return
+    // }
+
+    ////// >>>>>
+
     // Create objects according to the number of actors
-    if (
-      this.myRoomActorCount() <= 1 &&
-      actor.actorNr == this.myActor().actorNr
-    ) {
-      // [1] when joined actor is only me
-      console.log('🤖', '[ Joined actor is only me! ]')
-      Model.createModel(actor.actorNr)
-      updateIsMyObjectCreated(true)
-      let tmpRoomModelNr = actor.getCustomProperty('roomModel')
-      if (store.roomModelNumber != tmpRoomModelNr) {
-        // removeRoomModel()
-        this.myActor().setCustomProperty('roomModel', store.roomModelNumber)
-        //createRoomModel(roomModelNumber);
-      }
-    } else {
-      if (actor.actorNr == this.myActor().actorNr) {
-        // [2] when joined actor is me
-        console.log('🤖', '[ Joined actor is me ]')
+    // if (
+    //   this.myRoomActorCount() <= 1 &&
+    //   actor.actorNr == this.myActor().actorNr
+    // ) {
+    //   // [1] when joined actor is only me
+    //   console.log('🤖', '[ Joined actor is only me! ]')
+    //   Model.createModel(actor.actorNr)
+    //   updateIsMyObjectCreated(true)
+    //   let tmpRoomModelNr = actor.getCustomProperty('roomModel')
+    //   if (store.roomModelNumber != tmpRoomModelNr) {
+    //     // removeRoomModel()
+    //     this.myActor().setCustomProperty('roomModel', store.roomModelNumber)
+    //     //createRoomModel(roomModelNumber);
+    //   }
+    // } else {
+    //   if (actor.actorNr == this.myActor().actorNr) {
+    //     // [2] when joined actor is me
+    //     console.log('🤖', '[ Joined actor is me ]')
 
-        let tmpRoomModelNr
-        for (var nr in this.myRoomActors()) {
-          var actr = this.myRoomActors()[nr]
-          if (nr != this.myActor().actorNr) {
-            tmpRoomModelNr = actr.getCustomProperty('roomModel')
-          }
-        }
+    //     let tmpRoomModelNr
+    //     for (var nr in this.myRoomActors()) {
+    //       var actr = this.myRoomActors()[nr]
+    //       if (nr != this.myActor().actorNr) {
+    //         tmpRoomModelNr = actr.getCustomProperty('roomModel')
+    //       }
+    //     }
 
-        // Check other actor's room model number
-        if (tmpRoomModelNr && store.roomModelNumber != tmpRoomModelNr) {
-          console.log('Change room model...')
-          // removeRoomModel()
-          updateRoomModelNumber(tmpRoomModelNr)
-          this.myActor().setCustomProperty('roomModel', store.roomModelNumber)
-          console.log('onActorJoin-roomModelNumber:', store.roomModelNumber)
-          //createRoomModel(roomModelNumber);
-          // document.getElementById('roomModelNumber').selectedIndex =
-          //   store.roomModelNumber - 1
-        }
+    //     // Check other actor's room model number
+    //     if (tmpRoomModelNr && store.roomModelNumber != tmpRoomModelNr) {
+    //       console.log('Change room model...')
+    //       // removeRoomModel()
+    //       updateRoomModelNumber(tmpRoomModelNr)
+    //       this.myActor().setCustomProperty('roomModel', store.roomModelNumber)
+    //       console.log('onActorJoin-roomModelNumber:', store.roomModelNumber)
+    //       //createRoomModel(roomModelNumber);
+    //       // document.getElementById('roomModelNumber').selectedIndex =
+    //       //   store.roomModelNumber - 1
+    //     }
 
-        console.log({ myRoomActors: this.myRoomActors() })
+    //     console.log({ myRoomActors: this.myRoomActors() })
 
-        // Create actor models
-        for (var nr in this.myRoomActors()) {
-          var actr = this.myRoomActors()[nr]
-          if (nr == this.myActor().actorNr) {
-            Model.createModel(nr)
-            updateIsMyObjectCreated(true)
-          } else {
-            // Also perform initial settings for models of actors other than yourself
-            Model.createModel(nr, { actor: actr })
-          }
-        }
-      } else {
-        // [3] when joined actor is not me
-        console.log('joined actor is not me...')
-        Model.createModel(actor.actorNr)
-      }
-    }
+    //     // Create actor models
+    //     for (var nr in this.myRoomActors()) {
+    //       var actr = this.myRoomActors()[nr]
+    //       if (nr == this.myActor().actorNr) {
+    //         Model.createModel(nr)
+    //         updateIsMyObjectCreated(true)
+    //       } else {
+    //         // Also perform initial settings for models of actors other than yourself
+    //         Model.createModel(nr, { actor: actr })
+    //       }
+    //     }
+    //   } else {
+    //     // [3] when joined actor is not me
+    //     console.log('joined actor is not me...')
+    //     Model.createModel(actor.actorNr)
+    //   }
+    // }
 
-    // store.isObserver = false
-    this.updateRoomInfo()
+    // // store.isObserver = false
+    // this.updateRoomInfo()
   }
   AppLoadBalancing.prototype.onActorLeave = function (actor) {
     // Note: It seems that the onActorLeave event may be called twice for an actor leaving.
@@ -462,28 +562,22 @@ var AppLoadBalancing = /** @class */ (function (_super) {
         var gameId = menu.children[menu.selectedIndex].textContent
         var expectedUsers = document.getElementById('expectedusers')
 
-        console.log('===== OBSERVE ROOM =====')
-
-        store.isObserver = true
-
         _this.output(gameId)
 
         if (store.isObserver) {
           _this.output('Joining as observer')
         }
-
         _this.joinRoom(
           gameId,
           {
+            observer: true,
             expectedUsers:
               expectedUsers.value.length > 0
                 ? expectedUsers.value.split(',')
                 : undefined,
           },
           {
-            customGameProperties: {
-              observer: true,
-            },
+            observer: true,
           }
         )
       } else {
@@ -614,11 +708,21 @@ var AppLoadBalancing = /** @class */ (function (_super) {
     btn.disabled = !this.isJoinedToRoom()
   }
 
+  /**
+   * Update Model position in space
+   * @param {*} actor
+   */
   AppLoadBalancing.prototype.updateModelInfo = function (actor) {
+    // console.log('------- updateModelInfo -------')
+
     // Update actor model info
     if (this.isJoinedToRoom() && store.isMyObjectCreated) {
+      // const observer = actor.getCustomProperty('observer')
+      // console.log({ actor, observer })
+
       let actorNr = actor.actorNr
       let modelName = 'model' + String(actorNr)
+      const cameraWrap = document.querySelector('#cameraWrapper').object3D
       let pos, rot, scl
       if (store.models.length > 0) {
         // let scene = document.querySelector('a-scene').object3D;
@@ -632,6 +736,20 @@ var AppLoadBalancing = /** @class */ (function (_super) {
               model.position.set(pos.x, pos.y, pos.z)
               model.rotation.set(rot.x, rot.y, rot.z)
               model.scale.set(scl.x, scl.y, scl.z)
+
+              // if (store.observer) {
+              //   const cameraOffset = new THREE.Vector3(0.0, 0.0, 2.0) // NOTE Constant offset between the camera and the target
+
+              //   // NOTE Assuming the camera is direct child of the Scene
+              //   const objectPosition = new THREE.Vector3()
+              //   model.getWorldPosition(objectPosition)
+
+              //   cameraWrap.position.copy(objectPosition).add(cameraOffset)
+              //   console.log({
+              //     cameraWrapPos: cameraWrap.position,
+              //     objectPosition,
+              //   })
+              // }
             }
           }.bind(this)
         )
@@ -641,6 +759,7 @@ var AppLoadBalancing = /** @class */ (function (_super) {
       }
     }
   }
+
   return AppLoadBalancing
 })(Photon.LoadBalancing.LoadBalancingClient)
 

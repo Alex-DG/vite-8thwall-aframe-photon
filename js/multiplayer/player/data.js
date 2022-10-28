@@ -4,7 +4,7 @@ export const store = {
   connectOnStart: false,
   isMyObjectCreated: false,
   isDebug: true,
-  isObserver: false,
+  observer: false,
   roomModelNumber: -1,
   models: [],
   placement: {
