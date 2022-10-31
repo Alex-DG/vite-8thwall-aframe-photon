@@ -53,16 +53,19 @@ class PlayerInstance {
           Controls.movingForward()
         }
         MyActor.updateMyActorModelInfo()
+
         updateActionWeights(
           this.appLoadBalancing.myActor().actorNr,
           store.actionWeights
         )
 
-        this.settings.frameCount += 1
-        // Limit the frequency of custom property updates
-        if (this.settings.frameCount == this.settings.frequency) {
-          MyActor.updateMyActorCustomProperty()
-          this.settings.frameCount = 0
+        if (!store.observer) {
+          this.settings.frameCount += 1
+          // Limit the frequency of custom property updates
+          if (this.settings.frameCount == this.settings.frequency) {
+            MyActor.updateMyActorCustomProperty()
+            this.settings.frameCount = 0
+          }
         }
       }
     })

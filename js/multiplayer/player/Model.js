@@ -1,10 +1,43 @@
+import EventEmitter from '../../utils/EventEmitter'
 import { store } from './data'
 
 class ModelInstance {
-  async createModel(actorNr, actor = undefined) {
+  async createObserver(actorNr, options) {
+    const { actor, observer } = options || { actor: undefined }
+
+    console.log('---------------------------')
+    console.log('----- CREATE OBSERVER -----')
+    console.log('---------------------------')
+
+    // const roomActor = this.appLoadBalancing.myRoomActors()[actorNr]
+    // const observer = options.observer// roomActor.getCustomProperty('observer')
+
+    console.log({ observer })
+    try {
+      store.observer = observer
+
+      console.log('✅', 'Observer created!', { store })
+    } catch (error) {
+      console.error('❌', 'Load model - ERROR: ', { error })
+    }
+  }
+
+  async createModel(actorNr, options) {
+    const { actor } = options || { actor: undefined }
+
     console.log('------------------------')
     console.log('----- CREATE MODEL -----')
     console.log('------------------------')
+
+    // const roomActor = this.appLoadBalancing.myRoomActors()[actorNr]
+    // const observer = roomActor.getCustomProperty('observer')
+
+    // console.log({ roomActor, observer: roomActor?.customProperties?.observer })
+
+    // if (roomActor?.customProperties?.observer) {
+    //   console.log('S T O P!!!')
+    //   return
+    // }
 
     try {
       // Set a flag to determine if the room model is synchronized between each user
@@ -36,12 +69,17 @@ class ModelInstance {
       gltf.scene.position.set(0, 0, 0)
       gltf.scene.rotation.set(0, 0, 0)
       gltf.scene.scale.set(1.0, 1.0, 1.0)
-      gltf.scene.traverse(function (child) {
+      gltf.scene.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true
           // Change T-Shirt color
-          // if (child.name === 'HG_TSHIRT_Male001') {
-          //   child.material.color.setHex(Math.random() * 0xffffff)
+          // if (
+          //   roomActor?.customProperties?.observer &&
+          //   child.name === 'HG_TSHIRT_Male001'
+          // ) {
+          //   console.log('👚', 'Set observer TShirt!')
+          //   child.material.color.setHex(0xff0000)
+          //   // child.material.color.setHex(Math.random() * 0xffffff)
           // }
         }
       })
@@ -120,6 +158,13 @@ class ModelInstance {
       'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/js/libs/draco/'
     )
     this.loader.setDRACOLoader(dracoLoader)
+
+    this.appLoadBalancing.onEvent(10, (data) => {
+      console.log('EVENT!!!', { data })
+    })
+
+    this.createModel = this.createModel.bind(this)
+    this.createObserver = this.createObserver.bind(this)
   }
 }
 
